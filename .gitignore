@@ -1,0 +1,9 @@
+node_modules/
+**/stills/
+**/out.mp4
+**/out.gif
+**/*.video.mp4
+**/*.mix.wav
+**/plain.mp4
+.DS_Store
+videos/

@@ -1,0 +1,38 @@
+{
+  "name": "vox-style-animation",
+  "version": "1.0.0",
+  "description": "Make Vox-style editorial explainer animations that look professional: HTML + GSAP rendered to MP4 with synced sound. A Claude Code skill and a standalone kit.",
+  "scripts": {
+    "new": "node scripts/new.mjs",
+    "preview": "node scripts/serve.mjs",
+    "demo": "node scripts/render.mjs examples/apollo/index.html --gif",
+    "demo:stills": "node scripts/render.mjs examples/apollo/index.html --stills 1,2.5,6.5,9,13.9,19.5,23",
+    "textures": "python3 scripts/make_textures.py",
+    "sfx": "python3 scripts/make_sfx.py"
+  },
+  "keywords": [
+    "vox",
+    "explainer",
+    "animation",
+    "motion-graphics",
+    "gsap",
+    "claude-code",
+    "skill",
+    "collage",
+    "editorial"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "gsap": "^3.13.0"
+  },
+  "devDependencies": {
+    "d3-geo": "^3.1.1",
+    "playwright": "^1.63.0",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  }
+}

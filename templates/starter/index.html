@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Starter · vox-style-animation</title>
+<!-- Don't copy this by hand: run `npm run new -- my-video` and it creates videos/my-video/ with the paths set. -->
+<link rel="stylesheet" href="../../kit/vox.css">
+<script src="../../node_modules/gsap/dist/gsap.min.js"></script>
+<script src="../../kit/vox.js"></script>
+</head>
+<body>
+<script>
+/* A 10-second starter with no images: a title, a document, a note, numbered badges and a caption.
+   Replace the words, add photos with V.card(scene, "assets/photo.jpg", { … }), and time everything to your voice-over. */
+const V = VOX.init({ width: 1080, height: 1920, fps: 30, duration: 10 });   // 1920×1080 for YouTube
+
+// Scene 1 (0–4.6 s): hook
+const s1 = V.scene(0, 4.6);
+const eye = V.text(s1, "A question worth 60 seconds", { x: 92, y: 250, size: 30, font: "mono", cls: "vx-eyebrow" });
+V.type(eye, 0.2);
+const title = V.text(s1, "Why does every <mark>explainer</mark> look the same?", { x: 88, y: 310, w: 900, size: 116, lh: 1.0 });
+V.words(title, 0.5);
+V.highlight(title.querySelector("mark"), 1.6);
+const d = V.doc(s1, { x: 120, y: 900, w: 840, rot: -1.6, head: ["Field notes", "No. 1"],
+  html: "<p>1. Flat white backgrounds</p><p>2. Motion that is <u>too smooth</u></p><p>3. Everything moves at once</p>" });
+V.enter(d, 2.0, "rise");
+V.underline(d.querySelector("u"), 3.1);
+V.push(d, 2.0, 4.6, { to: 1.04 });
+
+// Paper wipe into scene 2
+const cut = V.paperWipe(4.2);
+
+// Scene 2 (cut–10 s): three numbered points land on their words, then a caption
+const s2 = V.scene(cut);
+V.el("div", "vx-paper", s2);
+["paper, not pixels", "move on twos", "one thing at a time"].forEach((txt, i) => {
+  const t = cut + 0.5 + i * 1.1;
+  V.badge(s2, String(i + 1), 190, 560 + i * 330, t, { size: 140 });
+  const line = V.text(s2, txt, { x: 300, y: 515 + i * 330, w: 700, size: 84 });
+  V.enter(line, t + 0.1, "wipe", { sfx: false });
+});
+const n = V.note(s2, "that's the whole trick", { x: 520, y: 1300, w: 440, size: 50, rot: 3 });
+V.enter(n, 8.2, "drop");
+V.caption(s2, "paper · twos · one thing", 8.6, 10);
+</script>
+</body>
+</html>

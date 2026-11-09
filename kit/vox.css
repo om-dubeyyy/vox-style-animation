@@ -1,0 +1,175 @@
+/* vox-style-animation kit: the stage, paper, lens layers, type and annotation styles.
+   Pair with kit/vox.js. Every size is in px of the frame (1080×1920 by default). */
+
+@font-face { font-family: "Instrument Serif"; src: url("fonts/InstrumentSerif-Regular.ttf") format("truetype"); font-style: normal; }
+@font-face { font-family: "Instrument Serif"; src: url("fonts/InstrumentSerif-Italic.ttf") format("truetype"); font-style: italic; }
+@font-face { font-family: "Inter"; src: url("fonts/Inter-Variable.ttf") format("truetype"); font-weight: 100 900; }
+@font-face { font-family: "JetBrains Mono"; src: url("fonts/JetBrainsMono-Regular.ttf") format("truetype"); font-weight: 400; }
+@font-face { font-family: "JetBrains Mono"; src: url("fonts/JetBrainsMono-Bold.ttf") format("truetype"); font-weight: 700; }
+@font-face { font-family: "Caveat"; src: url("fonts/Caveat-Variable.ttf") format("truetype"); font-weight: 400 700; }
+@font-face { font-family: "Anton"; src: url("fonts/Anton-Regular.ttf") format("truetype"); }
+@font-face { font-family: "Newsreader"; src: url("fonts/Newsreader-Italic-Variable.ttf") format("truetype"); font-style: italic; font-weight: 200 800; }
+
+:root {
+  /* palette: muted base + ONE loud accent. Swap per story, keep the roles. */
+  --vx-paper: #EFE8DA;      /* never pure white */
+  --vx-paper-2: #E4DBC8;    /* a second sheet, a shade darker */
+  --vx-card: #F7F3EA;       /* photo borders, notes */
+  --vx-ink: #1C1A17;        /* never pure black */
+  --vx-ink-soft: #4A453D;
+  --vx-accent: #FFD43B;     /* highlighter yellow */
+  --vx-red: #D7261E;        /* circles, arrows, the one alarm colour */
+  --vx-blue: #2A4D8F;       /* maps, water, a calm second accent */
+  --vx-land: #C9C1AE;
+  --vx-serif: "Instrument Serif", "Times New Roman", serif;
+  --vx-quote: "Newsreader", "Instrument Serif", Georgia, serif;
+  --vx-sans: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --vx-cond: "Anton", "Impact", sans-serif;
+  --vx-mono: "JetBrains Mono", "Courier New", monospace;
+  --vx-hand: "Caveat", "Comic Sans MS", cursive;
+}
+
+html, body { margin: 0; padding: 0; background: #111; overflow: hidden; }
+body.vx-render { background: transparent; }
+
+#vx-stage {
+  position: absolute; left: 0; top: 0; overflow: hidden; transform-origin: 0 0;
+  background: var(--vx-paper); color: var(--vx-ink); font-family: var(--vx-sans);
+  -webkit-font-smoothing: antialiased; text-rendering: geometricPrecision;
+}
+#vx-stage * { box-sizing: border-box; }
+.vx-layer { position: absolute; inset: 0; }
+#vx-camera { position: absolute; inset: 0; transform-origin: 50% 46%; will-change: transform; }
+.vx-scene { position: absolute; inset: 0; visibility: hidden; }
+
+/* paper: colour + neutral texture on overlay + soft light falloff (a sheet lit from above, not a flat fill) */
+.vx-paper { position: absolute; inset: -6%; background-color: var(--vx-paper); }
+.vx-paper::before { content: ""; position: absolute; inset: 0; background-image: var(--vx-paper-tex);
+  background-size: 1400px 1400px; mix-blend-mode: overlay; opacity: var(--vx-paper-amt, .55); }
+.vx-paper::after { content: ""; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 75% 60% at 48% 40%, rgba(255,255,255,.16), rgba(255,255,255,0) 60%),
+              radial-gradient(ellipse 90% 80% at 50% 50%, rgba(0,0,0,0) 55%, rgba(60,40,10,.10) 100%); }
+.vx-paper.crumpled::before { background-image: var(--vx-paper-tex), var(--vx-crumple-tex); background-size: 1400px, 1600px; }
+
+/* lens layers: sit above everything, never move with the camera (they are the lens, not the world) */
+.vx-fx { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
+.vx-vignette { background: radial-gradient(ellipse 80% 70% at 50% 46%, rgba(0,0,0,0) 50%, rgba(20,12,0,var(--vx-vig, .35)) 100%); }
+.vx-grain { background-size: 512px 512px; mix-blend-mode: overlay; opacity: var(--vx-grain, .16); }
+.vx-dust { background-size: cover; opacity: var(--vx-dust, .55); }
+.vx-flicker { background: #000; opacity: 0; }
+/* one hard diagonal window shadow across every scene: a light source that ties the collage together */
+.vx-window { mix-blend-mode: multiply; opacity: var(--vx-window, .18);
+  background: linear-gradient(118deg, rgba(0,0,0,0) 0 38%, rgba(40,25,5,1) 38.4% 58%, rgba(0,0,0,0) 58.4% 64%, rgba(40,25,5,1) 64.4% 100%);
+  filter: blur(6px); }
+.vx-fringe { backdrop-filter: blur(var(--vx-fringe, 0px));
+  -webkit-mask-image: radial-gradient(ellipse 70% 62% at 50% 46%, transparent 58%, #000 100%);
+          mask-image: radial-gradient(ellipse 70% 62% at 50% 46%, transparent 58%, #000 100%); }
+
+/* type */
+.vx-text { position: absolute; isolation: isolate; line-height: 1.08; white-space: normal; }
+.vx-serif { font-family: var(--vx-serif); font-weight: 400; letter-spacing: -0.01em; }
+.vx-quote { font-family: var(--vx-quote); font-style: italic; font-weight: 400; }
+.vx-sans { font-family: var(--vx-sans); font-weight: 600; letter-spacing: -0.02em; }
+.vx-cond { font-family: var(--vx-cond); text-transform: uppercase; letter-spacing: 0.01em; line-height: 0.95; }
+.vx-mono { font-family: var(--vx-mono); letter-spacing: 0.02em; }
+.vx-hand { font-family: var(--vx-hand); font-weight: 600; line-height: 1; }
+.vx-eyebrow { font-family: var(--vx-mono); font-size: 26px; text-transform: uppercase; letter-spacing: .14em; color: var(--vx-ink-soft); }
+.vx-word { display: inline-block; }
+.vx-nb { white-space: nowrap; }
+#vx-stage mark { background: none; color: inherit; }   /* <mark> is only a target for VOX.highlight */
+#vx-stage u { text-decoration: none; }                    /* <u> is only a target for VOX.underline */
+.vx-printed { filter: url(#vx-rough); }
+
+/* photo card: paper border, two-layer shadow (contact + ambient), the photo tinted (lifted blacks, -10% sat) */
+.vx-card { position: absolute; background: var(--vx-card); transform-origin: 50% 50%;
+  box-shadow: 0 1px 2px rgba(30,20,5,.35), 0 10px 18px -6px rgba(30,20,5,.30), 0 26px 50px -12px rgba(30,20,5,.28); }
+.vx-card.flat { box-shadow: 0 1px 1px rgba(30,20,5,.3), 0 4px 10px -4px rgba(30,20,5,.25); }
+.vx-card.lifted { box-shadow: 0 2px 3px rgba(30,20,5,.3), 0 22px 30px -8px rgba(30,20,5,.30), 0 50px 80px -20px rgba(30,20,5,.30); }
+.vx-card .vx-img { position: absolute; overflow: hidden; background: #888; }
+.vx-card .vx-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; filter: url(#vx-tint); }
+.vx-card.bw .vx-img img { filter: url(#vx-tint) grayscale(1) contrast(.92); }
+.vx-card .vx-img::after { content: ""; position: absolute; inset: 0; pointer-events: none;   /* photo paper sheen + edge burn */
+  background: radial-gradient(ellipse 120% 100% at 30% 20%, rgba(255,255,255,.07), rgba(0,0,0,0) 50%),
+              radial-gradient(ellipse 85% 85% at 50% 50%, rgba(0,0,0,0) 62%, rgba(25,15,0,.22) 100%); }
+.vx-card .vx-halftone { position: absolute; inset: 0; background-image: var(--vx-halftone-tex); background-size: 128px 128px;
+  mix-blend-mode: multiply; opacity: 0; }
+.vx-card .vx-caption { position: absolute; left: 0; right: 0; font-family: var(--vx-hand); color: var(--vx-ink); text-align: center; }
+.vx-tape { position: absolute; width: 170px; height: 48px; background-size: 100% 100%; opacity: .92;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.18)); z-index: 3; }
+
+/* cut-out: a PNG with alpha gets a white sticker edge and a tight shadow */
+.vx-cutout { position: absolute; transform-origin: 50% 100%; }
+.vx-cutout img { display: block; width: 100%; height: auto; filter: url(#vx-tint); }
+
+/* label: black box, mono caps */
+.vx-label { position: absolute; background: var(--vx-ink); color: var(--vx-card); font-family: var(--vx-mono);
+  font-weight: 700; text-transform: uppercase; letter-spacing: .08em; padding: .38em .7em .32em; white-space: nowrap;
+  box-shadow: 0 6px 14px -6px rgba(0,0,0,.45); }
+.vx-label.paper { background: var(--vx-card); color: var(--vx-ink); }
+.vx-label.accent { background: var(--vx-accent); color: var(--vx-ink); }
+.vx-label.red { background: var(--vx-red); color: #fff; }
+
+/* note: a torn scrap of paper with handwriting */
+.vx-note { position: absolute; background: var(--vx-card); padding: 26px 30px; font-family: var(--vx-hand);
+  color: var(--vx-ink); box-shadow: 0 1px 2px rgba(30,20,5,.3), 0 12px 24px -10px rgba(30,20,5,.35); }
+
+/* document: a typed page */
+.vx-doc { position: absolute; background: #F4EEDF; color: #26221C; padding: 64px 70px; font-family: var(--vx-mono);
+  font-size: 30px; line-height: 1.55; isolation: isolate;
+  box-shadow: 0 1px 2px rgba(30,20,5,.3), 0 14px 28px -10px rgba(30,20,5,.32), 0 40px 70px -24px rgba(30,20,5,.3); }
+.vx-doc::before { content: ""; position: absolute; inset: 0; background-image: var(--vx-paper-tex); background-size: 900px;
+  mix-blend-mode: overlay; opacity: .7; z-index: -1; }
+.vx-doc .vx-doc-head { font-size: 22px; letter-spacing: .16em; text-transform: uppercase; color: #6B6355;
+  border-bottom: 2px solid #CFC5B0; padding-bottom: 18px; margin-bottom: 28px; display: flex; justify-content: space-between; }
+.vx-doc p { margin: 0 0 .9em; }
+
+/* highlighter / underline / strike, drawn per word so the sweep travels across lines */
+.vx-hl { position: relative; }   /* no z-index: the marker joins the nearest isolated parent (.vx-text, .vx-doc) and multiplies on its paper */
+.vx-hl::before { content: ""; position: absolute; left: -.08em; right: var(--hl-join, -.08em); top: .1em; bottom: -.02em; z-index: -1;
+  background: var(--vx-hl-shape) center / 100% 100% no-repeat; mix-blend-mode: multiply;
+  clip-path: inset(0 calc(100% - var(--p, 0%)) 0 0); }
+.vx-ul { position: relative; }
+.vx-ul::after { content: ""; position: absolute; left: -.04em; right: -.04em; bottom: -.12em; height: .16em;
+  background: var(--vx-ul-shape) center / 100% 100% no-repeat; clip-path: inset(0 calc(100% - var(--p, 0%)) 0 0); }
+.vx-strike { position: relative; }
+.vx-strike::after { content: ""; position: absolute; left: -.04em; right: -.04em; top: 52%; height: .12em; background: var(--vx-red);
+  transform: rotate(-1.5deg); clip-path: inset(0 calc(100% - var(--p, 0%)) 0 0); }
+.vx-redact { position: relative; }
+.vx-redact::after { content: ""; position: absolute; left: -.06em; right: -.06em; top: .08em; bottom: .02em; background: #151310;
+  clip-path: inset(0 calc(100% - var(--p, 0%)) 0 0); }
+
+/* solid box behind a word (highlight { box: true }) */
+.vx-hlbox::before { mix-blend-mode: normal; top: -.02em; bottom: -.06em; left: -.12em; }
+/* caption box: ~62% black, rounded, condensed caps, low in frame */
+.vx-caption-box { position: absolute; left: 50%; background: rgba(12,10,8,.62); color: #fff; font-family: var(--vx-cond);
+  text-transform: uppercase; letter-spacing: .02em; padding: .14em .42em .1em; border-radius: .18em; white-space: nowrap; z-index: 20; }
+/* numbered badge */
+.vx-badge { position: absolute; border-radius: 50%; background: var(--vx-red); color: #fff; font-family: var(--vx-serif);
+  display: flex; align-items: center; justify-content: center; line-height: 1; padding-bottom: .06em;
+  box-shadow: 0 2px 3px rgba(30,20,5,.3), 0 12px 20px -8px rgba(30,20,5,.35); }
+
+/* counters and charts */
+.vx-count { font-variant-numeric: tabular-nums; }
+.vx-bar { position: absolute; bottom: 0; transform-origin: 50% 100%; }
+
+/* map pin */
+.vx-pin { position: absolute; width: 0; height: 0; }
+.vx-pin .dot { position: absolute; left: -12px; top: -12px; width: 24px; height: 24px; border-radius: 50%; background: var(--vx-red);
+  box-shadow: 0 0 0 5px var(--vx-card), 0 6px 10px rgba(0,0,0,.35); }
+.vx-pin .ring { position: absolute; left: -12px; top: -12px; width: 24px; height: 24px; border-radius: 50%; border: 4px solid var(--vx-red); opacity: 0; }
+
+/* preview chrome (never rendered) */
+#vx-bar { position: fixed; left: 0; right: 0; bottom: 0; height: 44px; background: #1b1b1b; color: #ddd; display: flex; align-items: center;
+  gap: 12px; padding: 0 14px; font: 13px/1 ui-monospace, Menlo, monospace; z-index: 99; }
+#vx-bar input { flex: 1; }
+#vx-bar button { background: #333; color: #eee; border: 0; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+body.vx-render #vx-bar { display: none; }
+
+/* ?plain — the "template" look, for before/after comparisons: flat white, no texture, no shadows, no light */
+.vx-plain .vx-paper::before, .vx-plain .vx-paper::after, .vx-plain .vx-doc::before, .vx-plain .vx-card .vx-img::after { display: none; }
+.vx-plain .vx-card, .vx-plain .vx-doc, .vx-plain .vx-note, .vx-plain .vx-label, .vx-plain .vx-badge, .vx-plain .vx-bar { box-shadow: none !important; }
+.vx-plain .vx-cardwrap, .vx-plain .vx-cutout { filter: none !important; }
+.vx-plain .vx-card { background: #fff; }
+.vx-plain .vx-card .vx-img img { filter: none !important; }
+.vx-plain .vx-doc, .vx-plain .vx-note { background: #F2F2F2; clip-path: none !important; }
+.vx-plain .vx-halftone { display: none; }

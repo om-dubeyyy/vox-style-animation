@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apollo 11 · vox-style-animation demo</title>
+<link rel="stylesheet" href="../../kit/vox.css">
+<script src="../../node_modules/gsap/dist/gsap.min.js"></script>
+<script src="../../kit/vox.js"></script>
+<script src="map.js"></script>
+<style>
+  /* story palette: muted paper + one loud accent (the highlighter); red only for pen marks and pins */
+  .big { color: var(--vx-ink); }
+</style>
+</head>
+<body>
+<script>
+/* A 25-second vertical explainer that uses most of the kit.
+   Photos: NASA (public domain; credit given on screen and in the README). Facts checked against NASA sources —
+   see examples/apollo/SOURCES.md. Scene times are in seconds; every helper returns the time it finishes. */
+const V = VOX.init({ width: 1080, height: 1920, fps: 30, duration: 25.5, grain: 0.17, dust: 0.6, vignette: 0.38, fringe: 3 });
+const A = "assets/";
+
+// ── 1 · Title: eyebrow types on, headline rises word by word, the key phrase gets the marker, a photo drops in ──
+const s1 = V.scene(0, 5.05);
+const eb1 = V.text(s1, "July 16, 1969 · Kennedy Space Center", { x: 92, y: 248, size: 30, font: "mono", cls: "vx-eyebrow" });
+V.type(eb1, 0.25, { cps: 30 });
+const h1 = V.text(s1, "How the Moon landing ran on <mark>4&nbsp;KB of RAM</mark>", { x: 88, y: 314, w: 920, size: 122, lh: 1.0 });
+V.words(h1, 0.6, { stagger: 0.08 });
+V.highlight(h1.querySelector("mark"), 1.75);
+const rocket = V.card(s1, A + "S69-39961.jpg", { x: 300, y: 800, w: 450, h: 650, rot: -2.5, tape: ["t"], seed: 2, focus: "50% 30%" });
+V.enter(rocket, 2.25, "drop");
+V.push(rocket, 2.25, 5.3, { to: 1.045 });
+const tag = V.label(s1, "Saturn V · 363 ft tall", { x: 470, y: 1400, size: 32, style: "accent", rot: 2 });
+V.enter(tag, 3.1, "pop");
+V.arrow(s1, [640, 1388], [585, 1160], 3.35, { bend: -0.3 });
+V.sfx("sub_hit", 0.02, { gain: -9 });
+V.camera(0, 5, { scale: 1.025 }, VOX.EASE.soft);
+
+// paper wipe: a torn sheet sweeps across; scene 1 ends and scene 2 begins under it
+const cut12 = V.paperWipe(4.6);   // = 5.05
+
+// ── 2 · The document, then cut on the curve into the globe (A and B ride one eased zoom) ──
+const s2 = V.scene(cut12, 15.81);
+V.camera(cut12, 0.01, { scale: 1 });
+const wrap = V.group(s2);
+const a = V.group(wrap), b = V.group(wrap);
+V.el("div", "vx-paper", a).style.backgroundColor = "#E9E1CF";
+V.el("div", "vx-paper", b);
+
+const eb2 = V.text(a, "The computer that flew it", { x: 92, y: 248, size: 30, font: "mono", cls: "vx-eyebrow" });
+V.enter(eb2, cut12 + 0.15, "fade");
+const mc = V.card(a, A + "S69-39593.jpg", { x: 70, y: 960, w: 640, h: 422, rot: -3.5, bw: true, halftone: 0.22, tape: ["tl"], seed: 4 });
+V.enter(mc, cut12 + 0.45, "archive");
+V.push(mc, cut12 + 0.45, 10.6, { to: 1.03, x: 10 });   // push adds to enter(): no fight
+const mcl = V.label(a, "Mission Control, Houston", { x: 96, y: 1445, size: 26, style: "paper", rot: -3.5 });
+V.enter(mcl, cut12 + 0.9, "wipe");
+const sheet = V.doc(a, { x: 104, y: 360, w: 872, rot: 1.4, size: 36,
+  head: ["Apollo Guidance Computer", "At a glance"],
+  html: `<p>Working memory (RAM): <mark>2,048 words</mark>, about 4&nbsp;KB</p>
+         <p>Program memory (core rope): 36,864 words</p>
+         <p>Clock: about <u>1 MHz</u></p>
+         <p>Weight: <span class="w">32 kg</span></p>` });
+V.enter(sheet, cut12 + 0.2, "rise");
+V.push(sheet, cut12 + 0.2, 10.6, { to: 1.035 });
+V.highlight(sheet.querySelector("mark"), 6.5);
+V.underline(sheet.querySelector("u"), 7.6);
+V.circle(sheet.querySelector(".w"), 8.3, { pad: 18 });
+const n2 = V.note(a, "less than one photo<br>on your phone", { x: 590, y: 1220, w: 430, size: 54, rot: 4, seed: 3 });
+V.enter(n2, 7.2, "drop");
+
+const tc = V.curveCut(wrap, a, b, 9.95, { dur: 0.9, to: 2.2, origin: "36% 30%" });   // ≈ 10.4
+
+const eb3 = V.text(b, "8 days, 3 hours, 18 minutes", { x: 92, y: 248, size: 30, font: "mono", cls: "vx-eyebrow" });
+V.enter(eb3, tc + 0.1, "fade");
+const h3 = V.text(b, "Launch to splashdown", { x: 88, y: 308, w: 920, size: 108 });
+V.words(h3, tc + 0.15, { stagger: 0.09 });
+const M = VOX_MAPS.apollo, globe = V.svg(b, M.svg, { x: 40, y: 500, w: 1000, h: 1000 });
+V.push(globe, tc, 15.8, { to: 1.06, rotation: -2 });
+const P = M.points;
+V.pin(globe, ...P["Kennedy Space Center"], 11.4, { label: "Launch · Jul 16", labelOpts: { x: -330, y: -78 } });
+V.route(globe.querySelector("#route-0"), 11.9, 1.7, { dashed: true });
+V.pin(globe, ...P["Splashdown"], 13.5, { label: "Splashdown · Jul 24", labelOpts: { x: 30, y: 30 } });
+
+// ── 3 · Whip pan to the comparison ──
+const s4 = V.scene(15.81, 20.6);
+const tw = V.whip(s2, s4, 15.6);
+V.el("div", "vx-paper", s4);
+const eb4 = V.text(s4, "RAM, then and now", { x: 92, y: 248, size: 30, font: "mono", cls: "vx-eyebrow" });
+const h4 = V.text(s4, "A phone today has about <mark>two million times</mark> more", { x: 88, y: 308, w: 920, size: 100 });
+V.highlight(h4.querySelector("mark"), 17.3);
+const kb = (v) => (v < 1024 ? `${v} KB` : v < 1048576 ? `${Math.round(v / 1024)} MB` : `${(v / 1048576).toFixed(0)} GB`);
+V.bars(s4, [{ value: 4, label: "Apollo, 1969", color: "var(--vx-ink)" }, { value: 8388608, label: "Phone, 8 GB", color: "var(--vx-red)" }],
+  16.6, { x: 140, y: 640, w: 800, h: 840, dur: 1.4, stagger: 0.5, valueFmt: kb });
+const n4 = V.note(s4, "that sliver?<br>that's Apollo", { x: 96, y: 940, w: 360, size: 54, rot: -4, seed: 9 });
+V.enter(n4, 18.5, "drop");
+V.arrow(s4, [175, 1235], [190, 1382], 18.9, { bend: 0.3, head: 26 });
+V.sfx("riser", 18.4, { gain: -14 });
+
+// ── 4 · Hard cut to the payoff ──
+const s5 = V.scene(20.6);
+V.el("div", "vx-paper", s5);
+V.flash(20.6, { amt: 0.35 });
+V.sfx("sub_hit", 20.6, { gain: -8 });
+const buzz = V.card(s5, A + "as11-40-5903.jpg", { x: 70, y: 330, w: 920, h: 898, rot: 1.2, tape: ["tl", "br"], seed: 7, shadow: "lifted" });
+V.push(buzz, 20.6, 25.5, { to: 1.07, origin: "45% 35%" });
+V.float(buzz, 20.6, 25.5, { amp: 3, period: 4 });
+const h5 = V.text(s5, "And it <i>worked.</i>", { x: 88, y: 1300, w: 920, size: 150, align: "center" });
+V.words(h5, 21.3, { stagger: 0.12, from: { scale: 1.25, autoAlpha: 0 }, sfx: "card_drop" });
+const cr = V.text(s5, "Photos: NASA · Facts: NASA History Office", { x: 92, y: 258, w: 900, size: 24, font: "mono", align: "center", cls: "vx-eyebrow" });
+V.enter(cr, 22.6, "fade");
+</script>
+</body>
+</html>

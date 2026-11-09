@@ -22,6 +22,7 @@ window.VOX = (function () {
   const NS = "http://www.w3.org/2000/svg";
   const RENDER = /[?&]render\b/.test(location.search);
   let PLAIN = /[?&]plain\b/.test(location.search);   // ?plain = the "template" version: every pro detail switched off (for before/after)
+  let NOIMG = /[?&]noimg\b/.test(location.search);   // ?noimg = the same video with no images handed in: grey "?" boxes (the "don't let it guess" demo)
   const BASE = (document.currentScript && document.currentScript.src.replace(/[^/]*$/, "")) || "kit/";
 
   let W = 1080, H = 1920, FPS = 30, DUR = 10, tl, stage, camera, world, fx = {}, opts = {};
@@ -215,7 +216,8 @@ window.VOX = (function () {
     opts = o = Object.assign({ width: 1080, height: 1920, fps: 30, duration: 10, paper: null, texture: 0.55, crumple: false,
       grain: 0.13, dust: 0.55, vignette: 0.35, fringe: 0, flicker: 0.018, drift: 0, fxFps: 12, roomTone: -42, onTwos: true, window: 0 }, o || {});
     if (o.plain) PLAIN = true;
-    if (/[?&]draft\b/.test(location.search)) o.fringe = 0;   // render.mjs --scale ≠ 1: backdrop blur misbehaves at other pixel ratios
+    if (o.noimg) NOIMG = true;
+    if (/[?&]draft\b/.test(location.search)) o.fringe = 0;   // render.mjs --scale < 1 (a draft): backdrop blur misbehaves below 1×
     if (PLAIN) Object.assign(o, { paper: "#FFFFFF", texture: 0, crumple: false, grain: 0, dust: 0, vignette: 0, fringe: 0, flicker: 0,
       drift: 0, window: 0, onTwos: false, blackLift: 0, saturate: 1, roomTone: false });
     W = o.width; H = o.height; FPS = o.fps; DUR = o.duration;
@@ -276,7 +278,17 @@ window.VOX = (function () {
   function ready() {
     const imgs = [...stage.querySelectorAll("img")];
     return Promise.all([document.fonts.ready, ...imgs.map((i) => (i.complete ? (i.decode ? i.decode().catch(() => 0) : 0) : new Promise((r) => { i.onload = i.onerror = r; })))])
-      .then(() => { later.splice(0).forEach((f) => f()); tl.time(0); runProcs(0); return true; });
+      .then(() => { later.splice(0).forEach((f) => f()); if (NOIMG) noImages(); tl.time(0); runProcs(0); return true; });
+  }
+  // ?noimg / init({ noimg: true }): every photo becomes a grey "?" box and every cut-out disappears. It shows what a
+  // video looks like when the model has to guess the pictures: hand it your own images.
+  function noImages() {
+    stage.querySelectorAll(".vx-img").forEach((b) => {
+      b.style.background = "#BDBDBD";
+      b.querySelectorAll("img").forEach((i) => { i.style.visibility = "hidden"; });
+      if (!b.querySelector(".vx-noimg")) el("div", "vx-noimg", b).textContent = "?";
+    });
+    stage.querySelectorAll(".vx-cutout img").forEach((i) => { i.style.visibility = "hidden"; });
   }
 
   // ---------- scenes ----------
@@ -749,7 +761,7 @@ window.VOX = (function () {
     const max = o.max || Math.max(...data.map((d) => d.value)), bw = (o.w - o.gap * (data.length - 1)) / data.length;
     data.forEach((d, i) => {
       const hh = Math.max(4, (d.value / max) * (o.h - 120));
-      const b = el("div", "vx-bar", g, { left: px(i * (bw + o.gap)), width: px(bw), height: px(hh), bottom: "90px", background: d.color || "var(--vx-ink)",
+      const b = el("div", "vx-bar" + (o.riso && !PLAIN ? " vx-riso" : ""), g, { left: px(i * (bw + o.gap)), width: px(bw), height: px(hh), bottom: "90px", [o.riso ? "backgroundColor" : "background"]: d.color || "var(--vx-ink)",
         boxShadow: "0 1px 1px rgba(0,0,0,.25), 0 10px 18px -8px rgba(0,0,0,.3)" });
       const lb = el("div", "vx-text vx-mono", g, { left: px(i * (bw + o.gap)), width: px(bw), bottom: "20px", fontSize: "30px", textAlign: "center", textTransform: "uppercase" });
       lb.textContent = d.label || "";
@@ -876,6 +888,152 @@ window.VOX = (function () {
     return t + o.dur;
   }
 
+  // ---------- object life, narration timing, physical cuts (1.1) ----------
+  // A collage where every card sits dead still apart from the slow push reads as a slideshow.
+  // The measured reels keep the PAPER still but give the OBJECTS a little life. See references/LOOK_BOOK.md §10.
+
+  // footage(card, "assets/fire/f_%04d.jpg", t0, { n: 62, fps: 12, loop }) — a real clip playing inside a photo card,
+  // stepped on the 12 fps grid like the rest of the collage. frames: a printf-style pattern + { n }, or an array of URLs.
+  // Make the frames with: ffmpeg -i clip.mp4 -vf fps=12,scale=960:-2 -q:v 3 assets/fire/f_%04d.jpg
+  function footage(card, frames, t0, o) {
+    o = Object.assign({ fps: 12, n: 0, loop: false }, o || {});
+    const box = (card && card.photo) || $(card, "footage");
+    const list = Array.isArray(frames) ? frames
+      : [...Array(o.n)].map((_, i) => String(frames).replace(/%0?(\d*)d/, (m, d) => String(i + 1).padStart(+d || 0, "0")));
+    if (!list.length) throw new Error("VOX.footage(): no frames (pass an array of URLs, or a pattern with { n })");
+    const first = box.querySelector("img");
+    if (first) first.style.opacity = 0;
+    const imgs = list.map((src) => {
+      const im = el("img", "", box, { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0 });
+      im.src = src;
+      if (first && first.style.objectPosition) im.style.objectPosition = first.style.objectPosition;
+      if (first && first.style.filter) im.style.filter = first.style.filter;
+      return im;
+    });
+    proc((t) => {
+      let k = Math.floor((t - t0) * o.fps + 1e-6);
+      k = o.loop ? ((k % imgs.length) + imgs.length) % imgs.length : clamp(k, 0, imgs.length - 1);
+      for (let i = 0; i < imgs.length; i++) imgs[i].style.opacity = i === k ? 1 : 0;
+    });
+    return card;
+  }
+  // breathe(card, t0, t1, { from: 1.08, to: 1.15 }) — the picture pushes inside its card while the card itself holds
+  // still (@chrismoran__ DZF: 108 → 115%). Use it on every held photo or footage card. Stepped at 12 fps.
+  function breathe(card, t0, t1, o) {
+    o = Object.assign({ from: 1.08, to: 1.15, fps: 12 }, o || {});
+    const box = (card && card.photo) || $(card, "breathe"), D = Math.max(1e-6, t1 - t0);
+    proc((t) => {
+      const tt = o.fps ? Math.floor((t - t0) * o.fps) / o.fps : t - t0, k = lerp(o.from, o.to, clamp(tt / D, 0, 1)).toFixed(4);
+      box.querySelectorAll("img").forEach((im) => { im.style.transform = `scale(${k})`; });
+    });
+    return t1;
+  }
+  // scrap(parent, { x, y, w, h, rot, vx, vy, vr, blur, t0, seed, color }) — a torn paper scrap drifting past the lens,
+  // blurred like a foreground out of focus (@ashokreddyai's "v3 changelog"). vx/vy in px per second, vr in deg per second.
+  // One or two per scene, at the frame edge, never over the subject.
+  function scrap(parent, o) {
+    o = Object.assign({ x: 0, y: 0, w: 380, h: 150, rot: 0, vx: 30, vy: 0, vr: 0, blur: 7, t0: 0, seed: 1, color: "#D9D0BD", fps: 12 }, o || {});
+    const r = rng(o.seed), pts = [];
+    for (let i = 0; i <= 10; i++) pts.push(`${i * 10}% ${(r() * 9).toFixed(2)}%`);
+    for (let i = 10; i >= 0; i--) pts.push(`${i * 10}% ${(91 + r() * 9).toFixed(2)}%`);
+    const e = el("div", "vx-scrap", parent, { left: px(o.x), top: px(o.y), width: px(o.w), height: px(o.h),
+      clipPath: `polygon(${pts.join(",")})`, filter: o.blur ? `blur(${o.blur}px)` : "", background: o.color });
+    if (PLAIN) { e.style.display = "none"; return e; }
+    proc((t) => {
+      const d = o.fps ? Math.floor((t - o.t0) * o.fps) / o.fps : t - o.t0, m = mod(e);
+      m.tx += o.vx * d; m.ty += o.vy * d; m.r += o.rot + o.vr * d;
+    });
+    return e;
+  }
+  // ghost(parent, { x, y, w, rot, head, html, size, opacity: 0.07 }) — a faint document scan behind the action:
+  // the "layered background" (@chrismoran__ DY7). Put real, relevant text in it (the data's own bulletin), at 5–10%.
+  function ghost(parent, o) {
+    o = Object.assign({ size: 44, opacity: 0.07 }, o || {});
+    const g = doc(parent, o);
+    g.classList.add("vx-ghost");
+    g.style.opacity = PLAIN ? 0 : o.opacity;
+    return g;
+  }
+  // wordsAt(parent, [["The", 2.03], ["computer", 2.40], …], textOptions + { rise: 26, dur: 0.17, sfx }) —
+  // a line whose words appear exactly on their spoken words (take the times from wordmap()).
+  function wordsAt(parent, items, o) {
+    o = Object.assign({ rise: 26, dur: 0.17 }, o || {});
+    const host = text(parent, items.map(([w]) => `<span class="vx-ww">${w}</span>`).join(" "), o);
+    host.spoken = [...host.querySelectorAll(".vx-ww")];   // one span per item, in order: highlight(host.spoken[2], t)
+    host.spoken.forEach((sp, i) => {
+      const t = items[i][1];
+      sp.style.display = "inline-block";
+      tl.set(sp, { autoAlpha: 0 }, 0);
+      tl.fromTo(sp, { autoAlpha: 0, y: o.rise }, { autoAlpha: 1, y: 0, duration: o.dur, ease: ez("power2.out", o.dur, o), immediateRender: false }, t);
+      if (o.sfx) sfx(o.sfx, t, { gain: o.gain == null ? -16 : o.gain });
+    });
+    return host;
+  }
+  // wordmap(words, { offset }) — look spoken words up by name, so every cue follows the narration and a re-recorded
+  // line re-times the whole video. words: [{ w, s, e }] (scripts/words.py writes it), or the id of a
+  // <script type="application/json"> holding it. Returns w(word, n = 1) → start of the nth "word";
+  // w.after(word, t) → the first "word" at or after t; w.end(word, n) → its end. Unknown words throw (no silent drift).
+  function wordmap(src, o) {
+    o = Object.assign({ offset: 0 }, o || {});
+    let list = src;
+    if (typeof src === "string") {
+      const s = document.querySelector(src.startsWith("#") ? src : "#" + src);
+      if (!s) throw new Error(`VOX.wordmap(): no <script id="${src.replace(/^#/, "")}"> with the word list`);
+      list = JSON.parse(s.textContent);
+    }
+    if (list && !Array.isArray(list)) list = list.words;
+    if (!Array.isArray(list)) throw new Error("VOX.wordmap(): expected [{ w, s, e }] or { words: [...] }");
+    const norm = (x) => String(x).toLowerCase().replace(/[’']/g, "").replace(/[^\p{L}\p{N}%]+/gu, "");
+    const items = list.map((x) => ({ k: norm(x.w != null ? x.w : x.word), s: +(x.s != null ? x.s : x.start) + o.offset, e: +(x.e != null ? x.e : x.end) + o.offset }));
+    const find = (word, n) => {
+      const k = norm(word); let c = 0;
+      for (const x of items) if (x.k === k && ++c === (n || 1)) return x;
+      throw new Error(`VOX.wordmap(): "${word}"${n > 1 ? ` #${n}` : ""} is not in the narration`);
+    };
+    const w = (word, n) => find(word, n).s;
+    w.end = (word, n) => find(word, n).e;
+    w.after = (word, t) => {
+      const k = norm(word), x = items.find((y) => y.k === k && y.s >= t - 1e-6);
+      if (!x) throw new Error(`VOX.wordmap(): no "${word}" after ${t}s`);
+      return x.s;
+    };
+    w.words = items;
+    return w;
+  }
+  // zoomCut(a, b, t, { scale: 1.16, blur: 5, inDur: 0.3, outDur: 0.32, origin }) — a curve cut between two scenes:
+  // a zooms in and blurs into the cut, b arrives from the same zoom and settles. Make a end and b start at t.
+  // Put the cut right BEFORE the word it introduces ("…| Here's the data"). The whoosh and sub hit peak on t.
+  function zoomCut(a, b, t, o) {
+    o = Object.assign({ scale: 1.16, blur: 5, inDur: 0.3, outDur: 0.32, origin: "50% 45%", steps: 0, sfx: true }, o || {});
+    tl.fromTo(a, { scale: 1, filter: "blur(0px)" }, { scale: o.scale, filter: `blur(${o.blur}px)`, duration: o.inDur,
+      ease: ez("power3.in", o.inDur, o), immediateRender: false, transformOrigin: o.origin }, t - o.inDur);
+    tl.fromTo(b, { scale: o.scale, filter: `blur(${o.blur}px)` }, { scale: 1, filter: "blur(0px)", duration: o.outDur,
+      ease: ez("power3.out", o.outDur, o), immediateRender: false, transformOrigin: o.origin }, t);
+    if (o.sfx) { sfx("whoosh_fast", t - 0.14, { gain: -10 }); sfx("sub_hit", t, { gain: -12 }); }
+    return t;
+  }
+  // holePush(a, b, t0, t1, { x, y, zoom: 1.45, seed, rim }) — the page tears open around (x, y) and the camera pushes
+  // through the hole into scene b (@ashokreddyai). Make b start at t0; a can end at t1. The rim is the torn paper edge.
+  function holePush(a, b, t0, t1, o) {
+    o = Object.assign({ x: W * 0.69, y: H * 0.435, zoom: 1.45, seed: 31, rim: "#F6F1E6", sfx: true }, o || {});
+    const r = rng(o.seed), pts = [];
+    for (let i = 0; i < 28; i++) { const th = i / 28 * Math.PI * 2; pts.push([Math.cos(th) * (0.82 + r() * 0.3), Math.sin(th) * (0.82 + r() * 0.3)]); }
+    const poly = (R) => "polygon(" + pts.map(([x, y]) => `${(o.x + x * R).toFixed(1)}px ${(o.y + y * R * 0.8).toFixed(1)}px`).join(",") + ")";
+    const rim = el("div", "", a, { position: "absolute", left: 0, top: 0, width: px(W), height: px(H), background: o.rim,
+      boxShadow: "0 0 30px rgba(0,0,0,.4)", visibility: "hidden" });
+    const D = Math.max(1e-6, t1 - t0), far = Math.hypot(W, H) * 1.18;
+    const R = (t) => 30 + Math.pow(clamp((t - t0) / D, 0, 1), 2.4) * far;
+    proc((t) => {
+      const on = t >= t0;
+      rim.style.visibility = on ? "visible" : "hidden";
+      if (on) { const p = clamp((t - t0) / D, 0, 1), S = 1 + (o.zoom - 1) * p * p * p; rim.style.clipPath = poly(R(t) * 1.07 / S); }
+      b.style.clipPath = t < t1 ? poly(R(t)) : "none";
+    });
+    tl.fromTo(a, { scale: 1 }, { scale: o.zoom, duration: D, ease: "power2.in", immediateRender: false, transformOrigin: `${o.x}px ${o.y}px` }, t0);
+    if (o.sfx) { sfx("tape_rip", t0 - 0.05, { gain: -12 }); sfx("whoosh_low", t1 - 0.3, { gain: -14 }); }
+    return t1;
+  }
+
   // ---------- preview (browser) ----------
   function preview() {
     const bar = el("div", "", document.body); bar.id = "vx-bar";
@@ -943,6 +1101,7 @@ window.VOX = (function () {
     enter, exit, words, push, camera: cam, parallax, float, boil,
     highlight, underline, strike, redact, circle, arrow, spotlight,
     type, count, bars, caption, badge, route, pin, curveCut, whip, paperWipe, flash,
+    footage, breathe, scrap, ghost, wordsAt, wordmap, zoomCut, holePush,
     sfx, proc, stepped, bezier, q, EASE, rng, hash, el,
     get tl() { return tl; }, get stage() { return stage; }, get cameraEl() { return camera; },
     get W() { return W; }, get H() { return H; }, get fps() { return FPS; },

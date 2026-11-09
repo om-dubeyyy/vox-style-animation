@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Object life · vox-style-animation example (the 1.1 helpers)</title>
+<link rel="stylesheet" href="../../kit/vox.css">
+<script src="../../node_modules/gsap/dist/gsap.min.js"></script>
+<script src="../../kit/vox.js"></script>
+<style>
+  .st { font-family: var(--vx-sans); font-weight: 900; letter-spacing: -0.04em; line-height: .95; color: var(--vx-ink); }
+</style>
+</head>
+<body>
+<!-- The word list a narration would give you (scripts/words.py writes this). This example has no narration:
+     the times are a stand-in, so every cue below shows how a real one is looked up. -->
+<script type="application/json" id="words">[
+ {"w":"The","s":0.30,"e":0.42},{"w":"computer","s":0.42,"e":0.86},{"w":"that","s":0.86,"e":1.0},{"w":"landed","s":1.0,"e":1.36},
+ {"w":"on","s":1.36,"e":1.46},{"w":"the","s":1.46,"e":1.56},{"w":"Moon","s":1.56,"e":2.0},
+ {"w":"had","s":3.40,"e":3.56},{"w":"two","s":3.56,"e":3.78},{"w":"thousand","s":3.78,"e":4.16},{"w":"words","s":4.16,"e":4.5},
+ {"w":"of","s":4.5,"e":4.6},{"w":"working","s":4.6,"e":4.94},{"w":"memory.","s":4.94,"e":5.4},
+ {"w":"About","s":6.30,"e":6.56},{"w":"four","s":6.56,"e":6.8},{"w":"kilobytes.","s":6.8,"e":7.5}
+]</script>
+<script>
+/* What this shows (all added in 1.1; see references/LOOK_BOOK.md §10 and references/TIPS.md):
+   wordmap + wordsAt · breathe + float on held cards · scrap · ghost · zoomCut · bars({ riso }) · holePush · ?noimg.
+   Photos: NASA, public domain (examples/apollo/SOURCES.md). Numbers: NASA, Computers in Spaceflight ch. 2-5. */
+const V = VOX.init({ width: 1080, height: 1920, fps: 30, duration: 8.6, grain: 0.17, dust: 0.6, vignette: 0.38, fringe: 3, roomTone: false });
+const w = V.wordmap("#words");
+const A = "../apollo/assets/";
+const T_CUT = w("had") - 0.2, T_HOLE = w("about") - 0.5, T_IN = w("about") - 0.1;
+
+// 1 · the claim lands word by word over a held card that breathes and floats; a ghost of the real spec sheet behind
+const s1 = V.scene(0, T_CUT);
+V.ghost(s1, { x: -60, y: 120, w: 1200, rot: -4, head: ["APOLLO GUIDANCE COMPUTER", "BLOCK II"],
+  html: "<p>Erasable memory 2,048 words · 16-bit</p><p>Fixed memory 36,864 words</p><p>Clock 1 MHz · 70.1 lb</p><p>Erasable memory 2,048 words · 16-bit</p>" });
+V.wordsAt(s1, [["The", w("the")], ["computer", w("computer")], ["that", w("that")], ["landed", w("landed")], ["on", w("on")],
+  ["the", w("the", 2)], ["Moon", w("moon")]], { x: 92, y: 300, w: 900, size: 120, cls: "st" });
+const room = V.card(s1, A + "S69-39593.jpg", { x: 120, y: 900, w: 820, h: 560, rot: -2, tape: ["tl", "br"], seed: 4 });
+V.enter(room, 0.1, "drop");
+V.breathe(room, 0.1, T_CUT);                                    // the picture pushes 108 → 115% inside the card
+V.float(room, 0.6, T_CUT, { amp: 2.5, period: 4.2, rot: 0.3 }); // the card itself only drifts a pixel or two
+V.scrap(s1, { x: 820, y: 1640, w: 420, h: 150, rot: 9, vx: -46, vy: -12, vr: -1.5, blur: 7, seed: 4 });
+
+// 2 · a zoom cut right before "had", then the numbers (NASA), on risograph-speckled bars
+const s2 = V.scene(T_CUT, T_IN + 0.02);
+V.el("div", "vx-paper", s2).style.backgroundColor = "#E9E1CF";
+V.zoomCut(s1, s2, T_CUT, { sfx: false });
+const k = V.text(s2, 'Two thousand words of <mark>working memory</mark>.', { x: 92, y: 260, w: 900, size: 96, cls: "st" });
+V.enter(k, T_CUT + 0.05, "rise", { sfx: false });
+V.highlight(k.querySelector("mark"), w("working"), { sfx: false });
+V.text(s2, "AGC memory, 16-bit words", { x: 96, y: 610, size: 30, font: "mono", cls: "vx-eyebrow" });
+V.bars(s2, [{ value: 2048, label: "erasable", color: "#D7261E" }, { value: 36864, label: "fixed", color: "#3A352E" }], w("two"),
+  { x: 120, y: 680, w: 840, h: 700, gap: 120, riso: true, valueFmt: (v) => Math.round(v).toLocaleString("en-US") });
+const rocket = V.card(s2, A + "S69-39961.jpg", { x: 640, y: 1420, w: 300, h: 360, rot: 3, tape: ["t"], seed: 7, focus: "50% 30%" });
+V.enter(rocket, w("words"), "drop", { sfx: false });
+V.breathe(rocket, w("words"), T_IN, { from: 1.06, to: 1.12 });
+
+// 3 · the page tears around the rocket card and the camera pushes through into the payoff
+const s3 = V.scene(T_HOLE);
+V.el("div", "vx-paper", s3);
+V.holePush(s2, s3, T_HOLE, T_IN, { x: 790, y: 1600, sfx: false });
+const big = V.text(s3, "≈ 4 KB", { x: 92, y: 560, w: 900, size: 260, cls: "st" });
+V.enter(big, T_HOLE, "cut");                                   // already there as the hole opens
+const p = V.wordsAt(s3, [["About", w("about")], ["four", w("four")], ["kilobytes.", w("kilobytes")]], { x: 96, y: 900, w: 900, size: 96, cls: "st" });
+V.highlight(p.spoken[1], w("four") + 0.02, { sfx: false });
+V.highlight(p.spoken[2], w("kilobytes") + 0.02, { sfx: false });
+V.text(s3, "2,048 × 16 bits = 4,096 bytes", { x: 100, y: 1180, size: 34, font: "mono", color: "#5A534A" });
+V.scrap(s3, { x: -160, y: 120, w: 380, h: 150, rot: -7, vx: 30, vy: 8, vr: 1, blur: 8, t0: T_HOLE, seed: 9 });
+</script>
+</body>
+</html>

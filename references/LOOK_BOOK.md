@@ -31,7 +31,7 @@ And the rule above all rules: **the picture must carry the argument.** Joss Fong
 | Texture you *feel*, not see | High-pass luma std **1–4/255** on paper at 720p. Heavier (12–18) only on "object" surfaces such as cork or a cutting mat (M) | `texture: 0.55` (paper.png on overlay) |
 | The paper is static, or it flickers in steps like a scanned page. It never crawls. | Frame diffs 0.00–0.09 in @chrismoran__ (static); 0.3–6.9 every ~2nd frame in @ashokreddyai (step flicker) (M) | grain/dust swap on the 12 fps grid (`fxFps: 12`) |
 | Layer the background: a ghost scan or document at 5–10% plus a tint, never a flat solid | (S, @chrismoran__ "layered backgrounds", 1.44M plays) | a faint `doc()` or `card()` behind, with `el.style.opacity = 0.08` |
-| Light falls on the sheet | Soft top-left lift, darker edges (P). Optional single hard window shadow across every scene (S, @wadhwa.ai style key) | `.vx-paper::after`; `init({ window: 0.18 })` |
+| Light falls on the sheet | Soft top-left lift, darker edges (P). Optional single window shadow across every scene (S, @wadhwa.ai style key): one cool diagonal at ~139° with a 90–140 px soft edge, over grey paper #D3D4D4 (M) | `.vx-paper::after`; `init({ window: 0.18 })` |
 
 ## 2. Photos become objects
 
@@ -69,7 +69,7 @@ And the rule above all rules: **the picture must carry the argument.** Joss Fong
 | Pull-outs to reveal context | **−3 to −7 %/s** (M) | `push(..., { from: 1.2, to: 1 })` |
 | Entrance timing | Type mask reveal **0.33–0.42 s**; arrow or circle draw-on **0.17–0.25 s**; photo slide-in **~0.67 s** (M) | defaults: `wipe` 0.4, `arrow` 0.25, `circle` 0.3, `rise` 0.75 |
 | Easing | Strong ease-out on entrances. Camera slow-fast-slow at ~70% influence (S). A very steep middle for match zooms (AE influence 97% shown) (S) | `EASE.land`, `EASE.camera`, `EASE.cut` |
-| **Only one thing moves** | In the strongest shots the paper does not move at all (diff 0) while an arrow draws (M) | stagger your calls; don't animate everything at t |
+| **Only one thing moves** | In the strongest shots the paper does not move at all (diff 0) while an arrow draws (M). One *main* move at a time; the objects still breathe (§10) | stagger your calls; don't animate everything at t |
 | Key to the words, not a timer | Numbered badges pop **0.33 s** apart, exactly on "one… two… three" (M) | take times from the voice-over transcript |
 | Hand-drawn lines draw on, then hold | Global wiggle is rare in the best reels (M). If you boil, use 4–12 redraws/s at displacement 5–10 (S) | `circle()` holds; `boil(el, t0, t1, { fps: 8 })` is opt-in |
 | The paper holds still while one thing moves | Paper frame-diff 0 during element moves (M). Only the lens (grain, dust) lives | `drift: 0` by default; `init({ drift: 1 })` adds a 1–2 px handheld feel (P) if you want it |
@@ -110,6 +110,8 @@ And the rule above all rules: **the picture must carry the argument.** Joss Fong
 | Transitions are physical: a hard cut at peak velocity, a paper tear, a page peel, a push through a torn hole. **Never a dissolve** | (M, S) |
 | "Cut the curve": cut on the fastest frame of one eased move | ~0.6 s, travel ~12% of the frame, optional 8–10 px blur (S) → `curveCut()` |
 | Text match cut: 12+ pages with the same word, centred, ~8 frames each and shortening, with a camera click on every cut | (S) |
+| Zoom cut between two scenes: the first zooms ~1.16× and blurs ~5 px into the cut (0.3 s), the next arrives from the same zoom and settles (0.32 s). Cut just *before* the word it introduces | (P) → `zoomCut()` |
+| Push through a torn hole: the page rips open around the thing you're leaving and the camera pushes through into the next scene | (M, @ashokreddyai) → `holePush()` |
 
 ## 9. Sound is half the look
 
@@ -120,13 +122,33 @@ And the rule above all rules: **the picture must carry the argument.** Joss Fong
 | Deliver loud and even | Reels measured −14.1 to −14.6 LUFS (likely Instagram normalisation), LRA 1.3–3.6 LU (M); YouTube ~−14 LUFS (S) |
 | SFX follow the action and the words | Paper on entrances, marker on highlights, keys on type-ons, a click on landings; whoosh peak on the fastest frame; leave ~80 ms for a separate impact (S) |
 | Don't put a whoosh on every cut | Same sweep on every cut = amateur (S) |
-| Never digital silence | Room tone at about −42 dB (P) → `init({ roomTone: -42 })` |
+| Never digital silence | Room tone at about −42 dB (P) → `init({ roomTone: -42 })`; with real room tone mixed after the master, about −48 LUFS (P) |
+| Recorded foley, not synthesis, for the final | Paper slides and drops, a rubber stamp, pen, typewriter, tape rip, projector. Synthesized ticks, pops and chimes read as an app (P) → SOUND.md |
+| The hit lands on the frame | Align the sample's *peak*, not its start, to the frame; whoosh and sub hit both peak on a cut (P) → `doc_mix.py` `"align": "peak"` |
 
 Full detail: [SOUND.md](SOUND.md).
 
 ---
 
-## The 16 amateur tells (check every render against these)
+## 10. Object life: the paper holds still, the objects breathe (added Nov 2026)
+
+A cut that obeys "one thing moves" so literally that every card sits dead still between its entrance and its exit reads as a slideshow ([TIPS.md](TIPS.md)). The measured reels hold the *paper* still, not the objects.
+
+| Rule | Numbers | Kit |
+|---|---|---|
+| The photo breathes inside its card while the card holds still | Picture 108 → 115% over the hold (S, @chrismoran__ DZF) | `breathe(card, t0, t1)` on every held photo or footage card |
+| Real footage inside the card, stepped on twos | 12 fps frame sequence, tinted like the stills | `footage(card, "clip/f_%04d.jpg", t0, { n })` |
+| Cards and cut-outs float a little | 2–3 px, 0.2–0.6°, periods 3–5 s, every object a different period (P) | `float(el, t0, t1, { amp: 2.5, period: 4, rot: 0.3 })` |
+| A torn scrap drifts past the lens | 1–2 per scene at the frame edge, blurred 7–8 px like a foreground, 30–60 px/s (S, @ashokreddyai "v3 changelog") | `scrap(scene, { … })` |
+| A ghost of the real document behind the action | The data's own bulletin at 5–10% (S, @chrismoran__ DY7) | `ghost(scene, { html, opacity: 0.07 })` |
+| A glow behind the one cut-out that matters | Soft radial white behind it, plus a hand label and an arrow (S, DY7) | a radial-gradient div under the `cutout()` |
+| Flat chart fills get a risograph speckle | Speckle texture on bars and strips instead of clean fills (S, @chrismoran__ DaDh) | `bars(…, { riso: true })`, or the class `vx-riso` on any flat fill |
+
+Keep it subtle: if you can name the motion while it plays, it's too much. The paper and the camera stay still; only the lens (grain, dust) and these small object moves are alive.
+
+---
+
+## The 18 amateur tells (check every render against these)
 
 1. A flat background (#000, #FFF or one flat colour) behind everything. Swap @chrismoran__'s layered background for black and it "instantly loses that editorial feel".
 2. Pure #000 inside photos. Untinted blacks punch holes in the paper.
@@ -143,4 +165,6 @@ Full detail: [SOUND.md](SOUND.md).
 13. Generated text inside AI images. Keep text out of the image and add it in the edit.
 14. Captions that fight the art: big, bright, full-width boxes.
 15. Glossy 3D renders or clean vector characters mixed into a paper collage.
-16. No provenance: borrowed footage with no "archive / from X" chip.
+16. No provenance: borrowed footage with no "archive / from X" chip (or, where a channel bans chips, no credit in the caption).
+17. Dead-still objects: every card frozen between its entrance and its exit, so only the push moves. (The paper holds still, the objects breathe; see §10.)
+18. An effects-only mix, or effects levelled by average loudness: the first big hit (a firework, a stamp) becomes the loudest thing in the video, and pen squeaks jump out. (See SOUND.md.)

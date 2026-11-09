@@ -22,9 +22,22 @@ I studied 9 reels about this style frame by frame (the strongest have 474K–1.4
 - **Physical cuts.** Cut on the fastest frame, tear, whip. Never a dissolve.
 - **Sound is half of it.** Paper, marker, keys and landings; music 18–24 dB under the voice; room tone; −14 LUFS.
 
-Every rule, with its numbers and where each one came from, is in **[references/LOOK_BOOK.md](references/LOOK_BOOK.md)**, together with the 16 amateur tells. Read it even if you never touch the code. It works the same in After Effects, Premiere, CapCut or Remotion.
+Every rule, with its numbers and where each one came from, is in **[references/LOOK_BOOK.md](references/LOOK_BOOK.md)**, together with the 18 amateur tells. Read it even if you never touch the code. It works the same in After Effects, Premiere, CapCut or Remotion.
 
 ![Demo: Apollo 11 explainer](media/demo.gif)
+
+## New in 1.1 (November 2026)
+
+What it takes to finish a short documentary in this look, beyond the look book's rules ([TIPS.md](references/TIPS.md)):
+
+- **Objects breathe while the paper holds still.** Obeying "one thing moves" too literally reads as a slideshow. New helpers: `breathe()` (the photo pushes inside its card), `footage()` (real clips in the cards, on twos), `scrap()` (torn paper drifting past the lens), `ghost()` (the real document faintly behind).
+- **Physical cuts between scenes:** `zoomCut()` and `holePush()` (the page tears and the camera pushes through).
+- **Everything on the narration's words:** `scripts/words.py` + `VOX.wordmap()`, one word list for the picture and the mix, so a re-recorded line re-times everything.
+- **A documentary mix with recorded foley:** `scripts/doc_mix.py` (narration as reference, each sound set by its own peak and peak-aligned on its word, room tone last, stems), four CC0 recorded sounds bundled, and the exact free samples that worked. The kit's synthesized sounds are now placeholders for drafts.
+- **Narration:** `scripts/narration.py` assembles line takes and speeds a slow read up without changing the voice.
+- **Native 4K:** `render.mjs --scale 2` now renders a full-quality 2× master (it used to count as a draft).
+- **Before/after shots:** `?noimg` shows the same video with the pictures guessed; PROMPTS.md has the recipe for a deliberately bad "before".
+- Two new amateur tells (dead-still objects; effects mastered on their own), risograph speckle for chart fills, and Apple Vision cut-outs (`scripts/subjectmask.swift`).
 
 ## What's inside
 
@@ -38,16 +51,22 @@ Every rule, with its numbers and where each one came from, is in **[references/L
 | `references/QA.md` | The checklist to run before you post |
 | `references/PROMPTS.md` | Copy-paste prompts for Claude Code |
 | `references/API.md` | Every kit function |
+| `references/TIPS.md` | Tips from finished videos (picture, timing, sound, truth, delivery) and a 10–12 s debunk shot by shot |
 | `kit/vox.js`, `kit/vox.css` | The animation kit: 40+ helpers, all seek-safe, on twos by default |
 | `kit/textures/` | Paper, grain, dust, crumple, tape and halftone, **generated in code** (MIT) |
-| `kit/sfx/` | 25 sound effects, **synthesised in code** (MIT): paper, marker, pen, keys, whooshes, hits |
+| `kit/sfx/` | 25 sound effects, **synthesised in code** (MIT) for drafts, plus `kit/sfx/cc0/`: four **recorded** CC0 sounds (rubber stamp, film projector, room tone, a warm pad) |
 | `kit/fonts/` | Six free fonts (OFL): serif, quote serif, sans, condensed, mono, handwriting |
 | `scripts/render.mjs` | Frame-exact renderer (headless Chromium → ffmpeg) with automatic SFX mix, music ducking and loudness |
 | `scripts/map.mjs` | Animatable maps from Natural Earth (public domain): highlight countries, pins, routes |
 | `scripts/photo_treat.py` | Turns a still into a filmed shot: fringe blur, dust, vignette, push, tint |
+| `scripts/words.py` | Word timings for a narration (faster-whisper, offline) → `words.json`, injected into the page |
+| `scripts/narration.py` | Assembles narration line takes: tight pauses, set beats, voice-preserving speed-up |
+| `scripts/doc_mix.py` | The documentary mix with recorded sounds, peak-aligned on the words, with stems |
+| `scripts/subjectmask.swift` | Free, offline cut-outs with Apple Vision (macOS) |
 | `scripts/make_textures.py`, `make_sfx.py` | Regenerate the textures and sounds |
 | `templates/starter/` | A 10-second starter with no images (`npm run new -- name` copies it) |
 | `examples/apollo/` | The 25-second demo above (NASA photos, sources cited) |
+| `examples/object-life/` | An 8.6 s piece using every 1.1 helper, with a working `cues.json` for `doc_mix.py` |
 
 ## Install
 
@@ -56,7 +75,7 @@ You need [Node 18+](https://nodejs.org), [ffmpeg 4.4+](https://ffmpeg.org/downlo
 **As a Claude Code skill** (recommended):
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/vox-style-animation ~/.claude/skills/vox-style-animation
+git clone https://github.com/om-dubeyyy/vox-style-animation ~/.claude/skills/vox-style-animation
 cd ~/.claude/skills/vox-style-animation
 npm install
 npx playwright install chromium
@@ -92,7 +111,7 @@ V.push(photo, 2.25, 6, { to: 1.045 });                // +1.5 %/s
 V.arrow(s, [700, 1676], [620, 1290], 3.35);           // hand-drawn, draws on in 0.3 s
 ```
 
-Every helper drops its own sound cue on the timeline. `render.mjs` mixes the cues with your voice-over (`--voice`) and music (`--music`, ducked under the voice), adds room tone and sets the master to −14 LUFS.
+Every helper drops its own sound cue on the timeline. `render.mjs` mixes the cues with your voice-over (`--voice`) and music (`--music`, ducked under the voice), adds room tone and sets the master to −14 LUFS. That's the quick draft. For a final, render with `--no-sfx` and mix recorded foley with `scripts/doc_mix.py` (see [SOUND.md](references/SOUND.md)).
 
 ## Use it in other tools
 
@@ -100,9 +119,9 @@ The look book is tool-agnostic. The kit is plain browser JS, so it also works in
 
 ## Credits
 
-- Built by **Ishan Dubey** ([@original.ishan](https://www.instagram.com/original.ishan/)) with Claude Code.
+- Built by **Ishan Dubey** ([@original.ishan](https://www.instagram.com/original.ishan/)).
 - The measured references are listed in [REFERENCES.md](references/REFERENCES.md). Special thanks to **@chrismoran__**, whose tutorials are the clearest public teaching of this look. Go follow him.
-- Demo photos: NASA (public domain in the US; no NASA endorsement implied). Demo map: Natural Earth (public domain). Fonts: SIL OFL. See [NOTICE.md](NOTICE.md).
+- Demo photos: NASA (public domain in the US; no NASA endorsement implied). Demo map: Natural Earth (public domain). Fonts: SIL OFL. Recorded sounds in `kit/sfx/cc0/`: CC0, from Freesound (15FPanska_KristynaHaupt, imagery2, mzui, waveplaySFX). See [NOTICE.md](NOTICE.md).
 
 MIT licence. Use it, fork it, ship videos with it. A credit or a tag is appreciated, not required.
 

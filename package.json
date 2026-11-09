@@ -1,6 +1,6 @@
 {
   "name": "vox-style-animation",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Make Vox-style editorial explainer animations that look professional: HTML + GSAP rendered to MP4 with synced sound. A Claude Code skill and a standalone kit.",
   "scripts": {
     "new": "node scripts/new.mjs",
@@ -8,7 +8,11 @@
     "demo": "node scripts/render.mjs examples/apollo/index.html --gif",
     "demo:stills": "node scripts/render.mjs examples/apollo/index.html --stills 1,2.5,6.5,9,13.9,19.5,23",
     "textures": "python3 scripts/make_textures.py",
-    "sfx": "python3 scripts/make_sfx.py"
+    "sfx": "python3 scripts/make_sfx.py",
+    "demo:object-life": "node scripts/render.mjs examples/object-life/index.html --stills 0.5,2.4,3.4,5.5,6.1,7.2",
+    "words": "python3 scripts/words.py",
+    "mix": "python3 scripts/doc_mix.py",
+    "narration": "python3 scripts/narration.py"
   },
   "keywords": [
     "vox",

@@ -11,6 +11,8 @@ dust_0..11.png    1920² transparent PNGs: specks, lint, the odd hairline scratc
 crumple.png       2048² crumpled-paper shading (neutral grey). Overlay on cards/posters at 0.3–0.5.
 tape_0..2.png     Masking-tape strips with torn ends, semi-transparent. Stick cards down with them.
 halftone.png      256² dot screen tile (45°). Multiply over photos at 0.15–0.3 for a printed look.
+riso_speckle.png  512² seamless cream specks on transparent. Use as background-image on flat chart fills (bars,
+                  strips) so they print like risograph ink, not like a vector fill (@chrismoran__ DaDh).
 """
 import os
 import numpy as np
@@ -173,6 +175,24 @@ def halftone(n=256, cell=8):
     return (a * 255).astype(np.uint8)
 
 
+def riso_speckle(n=512, seed=7, color=(239, 232, 218)):
+    """Cream flecks of 1–4 px on transparent, seamless, clumped by low-frequency noise (~15% coverage). The kit shows
+    it at background-size 256px, so each fleck lands at 0.5–2 px: ink texture, not noise."""
+    r = np.random.default_rng(seed)
+    a = np.zeros((n, n), np.float32)
+    m = fft_noise(n, 2.2, seed + 1)
+    m = (m - m.min()) / (m.max() - m.min())
+    for _ in range(int(n * n * 0.019)):
+        y, x = int(r.integers(0, n)), int(r.integers(0, n))
+        sz = int(r.choice([1, 2, 3, 4], p=[0.25, 0.35, 0.28, 0.12]))
+        v = r.uniform(0.35, 1.0) * min(1.0, 0.35 + 0.9 * m[y, x])
+        a[np.ix_([(y + i) % n for i in range(sz)], [(x + j) % n for j in range(sz)])] = v
+    rgba = np.zeros((n, n, 4), np.uint8)
+    rgba[..., :3] = color
+    rgba[..., 3] = (a * 255).astype(np.uint8)
+    return Image.fromarray(rgba, "RGBA")
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     g = paper()
@@ -186,6 +206,7 @@ def main():
     for i in range(3):
         tape(i).save(f"{OUT}/tape_{i}.png", optimize=True)
     Image.fromarray(halftone(), "L").save(f"{OUT}/halftone.png", optimize=True)
+    riso_speckle().save(f"{OUT}/riso_speckle.png", optimize=True)
     tot = 0
     for f in sorted(os.listdir(OUT)):
         s = os.path.getsize(f"{OUT}/{f}")

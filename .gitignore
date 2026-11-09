@@ -1,4 +1,4 @@
-node_modules/
+node_modules
 **/stills/
 **/out.mp4
 **/out.gif
@@ -7,3 +7,6 @@ node_modules/
 **/plain.mp4
 .DS_Store
 videos/
+scripts/subjectmask
+**/*_parts/
+__pycache__/

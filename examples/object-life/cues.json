@@ -1,0 +1,12 @@
+[
+  {"note": "card lands",            "src": "../../kit/sfx/card_drop.wav", "t": 0.35, "peak": -27, "align": "peak"},
+  {"note": "zoom cut before 'had'", "src": "../../kit/sfx/whoosh_fast.wav", "t": "had", "dt": -0.2, "peak": -24, "align": "peak"},
+  {"note": "…and its sub hit",      "src": "../../kit/sfx/sub_hit.wav", "t": "had", "dt": -0.2, "peak": -21, "align": "peak"},
+  {"note": "projector bed",         "src": "../../kit/sfx/cc0/film_projector_start.mp3", "t": "had", "ss": 3.0, "len": 2.6, "fade": 0.4, "peak": -36},
+  {"note": "the bars, stamped",     "src": "../../kit/sfx/cc0/rubber_stamp.mp3", "t": "two", "ss": 3.22, "len": 0.5, "fade": 0.15, "peak": -21, "align": "peak"},
+  {"note": "marker on 'working'",   "src": "../../kit/sfx/highlighter.wav", "t": "working", "peak": -27},
+  {"note": "the page tears",        "src": "../../kit/sfx/tape_rip.wav", "t": "about", "dt": -0.55, "peak": -23},
+  {"note": "push through the hole", "src": "../../kit/sfx/whoosh_low.wav", "t": "about", "dt": -0.1, "peak": -27, "align": "peak"},
+  {"note": "marker on 'four'",      "src": "../../kit/sfx/highlighter.wav", "t": "four", "peak": -27},
+  {"note": "marker on 'kilobytes'", "src": "../../kit/sfx/highlighter.wav", "t": "kilobytes", "peak": -29}
+]

@@ -33,6 +33,7 @@ All times are in **seconds on the master timeline**, and all sizes are **px in t
 | `drift` | 0 | Camera micro-drift (1 ≈ ±2 px). Off by default: the references hold the paper still. |
 | `fxFps` | 12 | How often grain, dust and flicker change per second. |
 | `plain` | false | The "template" look for before/after comparisons (also `?plain` in the URL or `--query plain` in the renderer). |
+| `noimg` | false | Every photo becomes a grey "?" box and cut-outs vanish: what the video looks like when the pictures are guessed (also `?noimg` / `--query noimg`). |
 | `blackLift`, `saturate` | 0.11, 0.88 | The photo tint: blacks lifted to ~#1C1C1C, colour −12%. |
 | `boil` | 5 | Displacement for `boil()`. |
 | `roomTone` | −42 | Room-tone level in dB (`false` = none). |
@@ -60,7 +61,9 @@ Returns the API (`V`). `V.tl` is the GSAP master timeline, if you want raw tween
 | `svg(parent, markup, { x, y, w, h })` | Inline any SVG (for example a map from `scripts/map.mjs`). |
 | `caption(parent, text, t0, t1, { y, size })` | The low caption box: ~62% black, condensed caps. `y` defaults to 0.76 on 9:16 (clear of the Reels UI) and 0.8 on 16:9. |
 | `badge(parent, "1", x, y, t, { size, color, pop })` | A numbered red disc that appears on its word (a hard pop like the references; `pop: true` scales it in). |
-| `bars(parent, data, t, { x, y, w, h, gap, stagger, dur, valueFmt })` | A bar chart that grows on twos, with counters. `data: [{ value, label, color }]`. Defaults scale with the frame. |
+| `bars(parent, data, t, { x, y, w, h, gap, stagger, dur, valueFmt, riso })` | A bar chart that grows on twos, with counters. `data: [{ value, label, color }]`. Defaults scale with the frame. `riso: true` prints the fills with a risograph speckle (the class `vx-riso` does the same on any flat fill). |
+| `ghost(parent, { x, y, w, rot, head, html, size, opacity })` | A faint document behind the action (a `doc` at 7%): the layered background. Put the data's real source text in it. |
+| `wordsAt(parent, [[word, t], …], { …text options, rise, dur, sfx })` | A line whose words appear exactly on their spoken words. The spans are on `.spoken` (for `highlight(host.spoken[2], t)`). |
 
 ## Motion
 
@@ -72,7 +75,10 @@ Returns the API (`V`). `V.tl` is the GSAP master timeline, if you want raw tween
 | `push(el, t0, t1, { from, to, x, y, rotation, origin, ease })` | Slow Ken Burns push. Holds +1–3 %/s, emphasis +4–6 %/s. Runs on the CSS `scale`/`translate` properties, so it **adds** to `enter()` instead of fighting it. |
 | `camera(t, dur, { x, y, scale, rotation, origin, steps, sfx }, ease?)` | Moves the whole world; the lens layers stay put. Default ease: slow-fast-slow (`EASE.camera`). |
 | `parallax([{ el, depth }], t0, t1, { dx, dy, zoom })` | depth 0 = far wall, 1 = at the lens. Keep it subtle. |
-| `float(el, t0, t1, { amp, period, rot })` | Breathing or bobbing on a cut-out (uses CSS `translate`, so it stacks with tweens). |
+| `float(el, t0, t1, { amp, period, rot })` | Breathing or bobbing on a card or cut-out (uses CSS `translate`, so it stacks with tweens). For held cards: `amp` 2–3, `rot` 0.2–0.6, a different `period` (3–5 s) per object. |
+| `breathe(card, t0, t1, { from: 1.08, to: 1.15 })` | The picture pushes inside its card while the card holds still. Use it on every held photo or footage card. |
+| `footage(card, "clip/f_%04d.jpg", t0, { n, fps: 12, loop })` | Plays a real clip (a frame sequence, or an array of URLs) inside a photo card, stepped at 12 fps. Frames: `ffmpeg -i clip.mp4 -vf fps=12,scale=960:-2 -q:v 3 clip/f_%04d.jpg`. |
+| `scrap(parent, { x, y, w, h, rot, vx, vy, vr, blur, t0, seed, color })` | A blurred torn scrap drifting past the lens (vx/vy px per second). One or two per scene, at the edge; create it last in its scene so it sits on top. |
 | `boil(el, t0, t1, { fps })` | Hand-drawn line boil (re-displaced `fps` times a second). |
 
 ## Annotation
@@ -109,6 +115,19 @@ Returns the API (`V`). `V.tl` is the GSAP master timeline, if you want raw tween
 | `whip(a, b, t, { dir, dur })` | Whip pan between two scenes with horizontal motion blur. Returns the cut time. Make `b`'s scene start there. |
 | `paperWipe(t, { dur, dir, color })` | A torn sheet sweeps across. Returns the time it fully covers the frame: switch scenes then. |
 | `flash(t, { amt, dur })` | A short exposure bump. Rarely. |
+| `zoomCut(a, b, t, { scale: 1.16, blur: 5, inDur: 0.3, outDur: 0.32, origin, sfx })` | A curve cut between two scenes: `a` zooms and blurs into the cut, `b` arrives from the same zoom and settles. End `a` and start `b` at `t`; put `t` just before the word it introduces. |
+| `holePush(a, b, t0, t1, { x, y, zoom: 1.45, seed, rim, sfx })` | The page tears open around (x, y) and the camera pushes through into scene `b`. Start `b` at `t0`; `a` can end at `t1`. |
+
+## Narration timing
+
+`VOX.wordmap(words, { offset })` turns a word list into lookups, so every cue follows the narration. `words` is `[{ w, s, e }]` (what `scripts/words.py` writes) or the id of a `<script type="application/json">` holding it (`--inject` puts it there). It returns `w(word, n = 1)` → the start of the nth time that word is said; `w.after(word, t)` → the first one at or after `t`; `w.end(word, n)`. Matching ignores case and punctuation ("here's" = "heres"). An unknown word throws, so a changed script fails loudly instead of drifting.
+
+```js
+const w = V.wordmap("#words", { offset: 0.10 });   // the narration starts 0.10 s into the video
+V.strike("#dz", w("not"));
+V.zoomCut(s1, s2, w("here's") - 0.06);
+V.highlight(mark, w("moon", 2));
+```
 
 ## Sound
 
@@ -121,4 +140,14 @@ Returns the API (`V`). `V.tl` is the GSAP master timeline, if you want raw tween
 ## Preview and render
 
 - Preview: `npm run preview` (a small Node server; leave it running and use a second terminal for renders), then open `http://localhost:8080/videos/<name>/` or `/examples/apollo/`. Space = play/pause, ←/→ = one frame (Shift = 1 s). Click "♪" for sound (needs http, not file://). Add `?t=7.5` to open on a frame.
-- Render: `node scripts/render.mjs page.html [--out x.mp4] [--voice vo.wav] [--music bed.mp3] [--stills 1,2.5] [--from 3 --to 9] [--scale 0.5] [--gif] [--no-sfx] [--no-duck] [--crf 18] [--lufs -14] [--query plain]`. `--scale` drafts switch off the fringe blur. The renderer stops on any page error.
+- Render: `node scripts/render.mjs page.html [--out x.mp4] [--voice vo.wav] [--music bed.mp3] [--stills 1,2.5] [--from 3 --to 9] [--scale 0.5] [--gif] [--no-sfx] [--no-duck] [--crf 18] [--lufs -14] [--query plain|noimg]`. `--scale` below 1 is a draft (fringe blur off). `--scale 2` is a native 2× master (3840×2160 from a 1920×1080 page, every text and shape drawn at that size, fringe on); use it for anything that will be shown at 4K. The renderer stops on any page error.
+
+## Scripts
+
+| Script | What it does |
+|---|---|
+| `scripts/words.py vo.wav [--inject page.html] [--offset 0.1] [--fix "cloud=Claude"]` | Word timings for the narration (faster-whisper, offline), starts snapped out of silences → `words.json` and the page. |
+| `scripts/narration.py l1.mp3 l2.mp3 … --out vo.wav [--tempo 1.2] [--gaps …]` | Assembles line takes: tightens pauses, sets the beat between lines, speeds up with rubberband (voice kept). |
+| `scripts/doc_mix.py silent.mp4 --cues cues.json --out final.mp4 [--voice] [--music] [--room] [--words] [--stems]` | The documentary mix with recorded sounds: narration as reference, each effect set by its peak and peak-aligned on its word, music 22 LU under, room tone last. See SOUND.md. |
+| `scripts/subjectmask.swift` | Apple Vision cut-outs on macOS (free, offline) → transparent PNGs for `cutout()`. |
+| `scripts/map.mjs`, `scripts/photo_treat.py`, `scripts/make_textures.py`, `scripts/make_sfx.py` | Maps, photo pre-treatment, the generated textures and sounds. |

@@ -31,7 +31,7 @@ For 5–15 min YouTube pieces, Vox repeats the context, turn and proof loop. It 
 ## 4. Write for the ear
 
 - Short sentences. One idea each.
-- About **210–225 words per minute** for reels (M). For long-form, slower is fine.
+- About **210–225 words per minute** for reels where the creator talks to camera (M). A documentary narrator reads slower, about **150–165 wpm** (P). For long-form, slower is fine.
 - Say the number, then show it. Say "this" while the circle draws.
 - No more than about 20 words per 10-second scene (S, AI workflow guidance).
 
@@ -46,7 +46,7 @@ One row per spoken phrase. This is what you hand to Claude, or follow yourself.
 | 3 | "This is the rocket" | 2.6 → 4.5 | Saturn V photo card, −2.5°, taped | drop in, slow push +1.5%/s | arrow + "363 ft" label | card_drop, pop |
 
 Rules for the shot list:
-- Take times from a **word-level transcript** of the voice-over (Whisper with `word_timestamps=True`, or any captioning tool). Annotations land on the word, not a guess.
+- Take times from a **word-level transcript** of the voice-over: `python3 scripts/words.py vo.wav --inject videos/x/index.html` writes `words.json` and puts it in the page, and `const w = V.wordmap("#words")` looks words up (`w("moon", 2)`, `w.after("to", t)`). The mix reads the same list (`doc_mix.py --words`). A re-recorded line then re-times everything with one run. Annotations land on the word, not a guess.
 - **One main motion per row.** Supporting motion (a slow push, the drift) is fine underneath.
 - Change something every **0.75–1.25 s** in collage sections (M). Holds of **5–6 s** only on a payoff image (S).
 - Mark the cut type per scene change: hard cut, `curveCut`, `whip`, `paperWipe`. No dissolves.
@@ -62,3 +62,17 @@ Vox doesn't use one house look. Each video gets **one visual idea** that repeats
 - "Every scene is a page torn out of a 1969 magazine"
 
 Write it at the top of the shot list. Every scene should obey it.
+
+## 7. The 10-second debunk
+
+A short hook that a longer video can open on, or a standalone post. Five beats, one per line of narration, each with a physical move:
+
+| Beat | Narration | Picture | Move |
+|---|---|---|---|
+| The claim | "[The claim everyone repeats]?" | the claim, readable **in frame 1**, over the strongest image | words land on their words; the photo breathes |
+| The turn | "Not really." | a red pen strikes the key word; a red note drops | strike on "Not" |
+| The data | "Here's the data: [the number that contradicts it]." | a typed fact sheet + bars | zoom cut just *before* "Here's"; a stamp on it; bars on the number |
+| The concession | "[What's true in the claim], and how small it is." | what it's really made of; the thing everyone blames, small | push through a torn hole into it |
+| The payoff | "[The reframe in a few words]." | the one number that reframes it | a count; the marker on the key words |
+
+Write the narration with a direction per line (see SOUND.md, "Narration"). Be exact about what a number means: a share of a *year* is not the share on the worst night, so say which one you mean. Leave out any claim the data doesn't carry, even if everyone repeats it. TIPS.md has this template shot by shot.

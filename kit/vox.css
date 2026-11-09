@@ -158,6 +158,14 @@ body.vx-render { background: transparent; }
   box-shadow: 0 0 0 5px var(--vx-card), 0 6px 10px rgba(0,0,0,.35); }
 .vx-pin .ring { position: absolute; left: -12px; top: -12px; width: 24px; height: 24px; border-radius: 50%; border: 4px solid var(--vx-red); opacity: 0; }
 
+/* scrap(): a torn paper scrap drifting past the lens (foreground, blurred) */
+.vx-scrap { position: absolute; pointer-events: none; }   /* no z-index: it stays in creation order, so make it last in its scene */
+.vx-scrap::before { content: ""; position: absolute; inset: 0; background-image: var(--vx-paper-tex); background-size: 900px; mix-blend-mode: multiply; opacity: .3; }
+/* risograph speckle on flat fills (bars({ riso: true }), or add the class to any strip): prints like ink, not vector */
+.vx-riso { background-image: url("textures/riso_speckle.png"); background-size: 256px 256px; }
+/* ?noimg: what the video looks like when the pictures are guessed (grey "?" boxes) */
+.vx-noimg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 700 120px/1 var(--vx-sans); color: #8A8A8A; }
+
 /* preview chrome (never rendered) */
 #vx-bar { position: fixed; left: 0; right: 0; bottom: 0; height: 44px; background: #1b1b1b; color: #ddd; display: flex; align-items: center;
   gap: 12px; padding: 0 14px; font: 13px/1 ui-monospace, Menlo, monospace; z-index: 99; }

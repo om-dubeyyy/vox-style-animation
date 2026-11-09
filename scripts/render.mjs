@@ -32,6 +32,7 @@ const opt = (k, d) => {   // --key value  or  --key=value
 const out = path.resolve(opt("out", path.join(path.dirname(page), "out.mp4")));
 const scale = +opt("scale", 1), crf = +opt("crf", 18), lufs = +opt("lufs", -14);
 const stills = opt("stills", null);
+fs.mkdirSync(path.dirname(out), { recursive: true });   // --out into a folder that doesn't exist yet
 if (spawnSync("ffmpeg", ["-version"]).error) {
   console.error("ffmpeg was not found. Install it (https://ffmpeg.org/download.html, or `brew install ffmpeg` / `winget install ffmpeg`) and try again.");
   process.exit(1);
@@ -45,7 +46,8 @@ const tab = await ctx.newPage();
 const errors = [];
 tab.on("pageerror", (e) => { errors.push(e.message); console.error("page error:", e.message); });
 tab.on("console", (m) => { if (m.type() === "error") console.error("console:", m.text()); });
-const query = [opt("query", ""), scale !== 1 ? "draft" : ""].filter(Boolean).join("&");   // --query plain → the "template" version
+const query = [opt("query", ""), scale < 1 ? "draft" : ""].filter(Boolean).join("&");   // --query plain → the "template" version · --query noimg → no images
+// --scale 2 renders a native 2× master (3840×2160 from a 1920×1080 page): every text and shape is drawn at that size, not upscaled
 await tab.goto(pathToFileURL(page).href + "?render" + (query ? "&" + query : ""), { waitUntil: "load" });
 await tab.waitForFunction(() => window.__vox, null, { timeout: 15000 }).catch(() => {});
 const stop = (why) => { console.error(`\nNot rendering: ${why}\nFix the page (open it in the browser preview to see the error), then run this again.`); process.exit(1); };
@@ -73,7 +75,8 @@ if (stills) {
 const t0 = +opt("from", 0), t1 = Math.min(+opt("to", cfg.dur), cfg.dur);
 const N = Math.round((t1 - t0) * fps);
 const silent = out.replace(/\.mp4$/, "") + ".video.mp4";
-if (scale !== 1) console.log(`  draft at ${scale}× (fringe blur off)`);
+if (scale < 1) console.log(`  draft at ${scale}× (fringe blur off)`);
+else if (scale !== 1) console.log(`  native ${scale}× master: ${cfg.w * scale}×${cfg.h * scale}`);
 // screenshots are full-range BT.601 JPEGs: convert to BT.709 TV range so the colours in the MP4 match the browser
 const enc = spawn("ffmpeg", ["-v", "error", "-y", "-f", "image2pipe", "-c:v", "mjpeg", "-framerate", String(fps), "-i", "-",
   "-vf", "scale=in_range=full:in_color_matrix=bt601:out_range=tv:out_color_matrix=bt709,format=yuv420p",

@@ -14,7 +14,15 @@ Studied for the numbers in LOOK_BOOK.md. They were sampled at 2 fps and at every
 | [Dct7Hc1OO5V](https://www.instagram.com/reel/Dct7Hc1OO5V/) | @mr.pynk | A Claude skill that writes Vox-style prompts for a video model |
 | [Deu5MAYIyIH](https://www.instagram.com/reel/Deu5MAYIyIH/) | @mr.pynk | Seven Claude video skills (one Vox-like) |
 | [DePNgrmToh9](https://www.instagram.com/reel/DePNgrmToh9/) | @ashokreddyai | Claude + an editor MCP; a "v3 changelog" that reads like a style spec |
-| [DfH3obUzyhB](https://www.instagram.com/reel/DfH3obUzyhB/) | @wadhwa.ai | Claude-built collage; a "locked style key"; a window-light shadow |
+| [DfH3obUzyhB](https://www.instagram.com/reel/DfH3obUzyhB/) | @wadhwa.ai | Claude-built collage; a "locked style key"; one cool window-light shadow across every scene (~139°, 90–140 px soft edge) over grey paper #D3D4D4 |
+
+## Short-form, added Nov 2026
+
+| Reel | Creator | What it teaches |
+|---|---|---|
+| [DfHkSBxh0oA](https://www.instagram.com/p/DfHkSBxh0oA/) | @autoaeonline | A debunk hook: the crowd's verdict, then big words, then a hard cut to the contradiction at 3.6 s; a strip across the eyes that swaps clips 8 times a second. 173 wpm with 20 pauses; the music drops out for 8 s. |
+| [Aqb-ZKzstDw](https://www.youtube.com/shorts/Aqb-ZKzstDw) | Joe Urbinati | Vox-style with Claude via an editor connector; a "VOX-STYLE" tape label; 262 wpm. |
+| [vEBZyRfG25M](https://www.youtube.com/shorts/vEBZyRfG25M) | Chris Moran | "The secret behind Vox's editorial style": layered backgrounds, on twos, paper static, a soft bed ~10 dB under the voice. |
 
 ## Long-form to study (YouTube)
 

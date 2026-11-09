@@ -13,12 +13,25 @@ Vox's rule: collect the footage, documents and photos **before** you finish the 
 | [Wikimedia Commons](https://commons.wikimedia.org) | Per-file licence (PD, CC0, CC BY, CC BY-SA) | Read every file's licence box; CC BY-SA means your video inherits it. |
 | [Smithsonian Open Access](https://www.si.edu/openaccess) | CC0 items are marked | Filter by CC0. |
 | British Pathé | **Not free** | A licence is needed even for non-commercial online use. |
+| [Pexels Videos](https://www.pexels.com/videos/) | Free to use, no credit required | Can't sell unaltered copies or imply that people shown endorse you. |
 
 Practical tips:
 - Download the largest size. Cards get pushed 6–15%, so a 1080-px image is too small for a full-frame card.
 - Keep a `SOURCES.md` next to every project: file, source URL, licence, credit line.
 - Treat graphic or traumatic real photos with care. Vox's animation team rarely uses them (S).
-- Label borrowed footage on screen ("Archive · NASA") with `label(..., { style: "paper" })`.
+- Label borrowed footage on screen ("Archive · NASA") with `label(..., { style: "paper" })`, or credit it in the post caption if the channel bans on-screen chips. CC BY-SA photos need their credit either way.
+
+## Footage inside the cards
+
+Real moving footage in a taped, tinted card reads as a documentary at once; stills alone read as a slideshow.
+
+- Look for **local** footage first (the place the story is about). Say so when only generic footage exists.
+- **Check every clip on a contact sheet** before using it: no watermark, no burned-in text or captions, no close-up faces of private people.
+- Cut it to 12 fps frames and play it inside the card on the twos grid:
+  ```
+  ffmpeg -i clip.mp4 -t 5 -vf fps=12,scale=960:-2 -q:v 3 videos/x/assets/fire/f_%04d.jpg
+  ```
+  `V.footage(card, "assets/fire/f_%04d.jpg", t0, { n: 60 })`, plus `V.breathe(card, t0, t1)`.
 
 ## Textures
 
@@ -37,6 +50,7 @@ If you want scanned textures:
 | [LaMa inpainting](https://github.com/advimman/lama) | Apache-2.0 | Fill the hole behind a cut-out before you parallax it. |
 | [Depth Anything V2](https://github.com/DepthAnything/Depth-Anything-V2) | **Small model Apache-2.0; Base/Large CC-BY-NC** | Depth maps for 2.5D. Use Small for anything commercial. |
 | Photopea / Photoshop / macOS "Lift subject" | — | Fine for a handful of images. |
+| `scripts/subjectmask.swift` (Apple Vision) | macOS 14+, free, offline | Any foreground object, not only people. `swiftc -O scripts/subjectmask.swift -o scripts/subjectmask`, then `scripts/subjectmask in.jpg out.png`. |
 
 Then: `cutout(scene, "subject.png", { outline: 9 })` adds the sticker edge and shadow.
 
@@ -64,7 +78,7 @@ node scripts/map.mjs --name europe --size 1080x1300 --projection mercator --fit 
 
 Borders are Natural Earth's **de-facto** lines, not every country's official ones. **Check disputed borders yourself before you publish.** Vox has pulled videos over map errors (S).
 
-> **Publishing for an Indian audience?** Natural Earth's default shapes split Kashmir and differ from India's official map (Kashmir, Ladakh, Arunachal Pradesh). Publishing a map of India that differs from the official boundary can be illegal in India, and platforms take such maps down. Use the Survey of India's official boundary, or Natural Earth's India point-of-view data (`ne_10m_admin_0_countries_ind`), or keep the frame off disputed areas. The same care applies to Crimea, Western Sahara, Taiwan, Palestine and others.
+> **Publishing for an Indian audience?** Natural Earth's default shapes split Kashmir and differ from India's official map (Kashmir, Ladakh, Arunachal Pradesh). Publishing a map of India that differs from the official boundary can be illegal in India, and platforms take such maps down. Use the Survey of India's official boundary, or Natural Earth's India point-of-view data (`ne_10m_admin_0_countries_ind`), or keep the frame off disputed areas. A satellite crop with no borders drawn avoids the problem. The same care applies to Crimea, Western Sahara, Taiwan, Palestine and others.
 
 ## Other tools worth knowing
 
